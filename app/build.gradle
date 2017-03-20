@@ -1,0 +1,117 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.github.triplet.play'
+apply plugin: 'kotlin-android'
+apply plugin: 'io.fabric'
+apply plugin: 'com.getkeepsafe.dexcount'
+
+android {
+    signingConfigs {
+        debug {
+            keyAlias 'debug'
+            keyPassword '123456'
+            storeFile file('../ag-debug')
+            storePassword '123456'
+        }
+        play {
+            keyAlias 'release'
+            storeFile file('../ag-prod')
+            storePassword signing_keychain_password
+            keyPassword signing_key_password
+        }
+    }
+    compileSdkVersion target_sdk
+    buildToolsVersion android_build_tools
+    defaultConfig {
+        manifestPlaceholders = [fabric_api_key: fabric_api_key]
+        applicationId "pro.agfusion.moneysurfer"
+        minSdkVersion min_sdk
+        targetSdkVersion target_sdk
+        versionCode app_version_code
+        versionName app_version
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        buildConfigField 'Boolean', 'enableCrashlytics', enable_fabric.toString()
+
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        testProguardFiles 'test-proguard-rules.pro'
+    }
+    buildTypes {
+        debug {
+            minifyEnabled isCi
+            shrinkResources isCi
+            applicationIdSuffix ".debug"
+            archivesBaseName = "surfer-debug-${app_version}"
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            archivesBaseName = "surfer-${app_version}"
+            signingConfig enable_prod_signature ? signingConfigs.play : signingConfigs.debug
+        }
+    }
+    lintOptions {
+        abortOnError true
+        textReport true
+        warningsAsErrors true
+    }
+}
+
+play {
+    jsonFile = file("../publisher.json")
+    track = 'alpha'
+}
+
+dependencies {
+    compile "com.android.support:support-v4:$android_support"
+    compile "com.android.support:appcompat-v7:$android_support"
+    compile "com.android.support:recyclerview-v7:$android_support"
+    compile "com.android.support:design:$android_support"
+
+    compile "com.android.support.constraint:constraint-layout:$android_constraint_layout"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+
+    compile "io.reactivex.rxjava2:rxkotlin:$rx_kotlin"
+    compile "io.reactivex.rxjava2:rxjava:$rx_java"
+    compile "com.jakewharton.rxrelay2:rxrelay:$rx_relay"
+    compile "com.trello.rxlifecycle2:rxlifecycle-android:$rx_android"
+    compile "com.trello.rxlifecycle2:rxlifecycle-navi:$rx_android"
+    compile "com.trello.rxlifecycle2:rxlifecycle-kotlin:$rx_android"
+    compile "io.reactivex.rxjava2:rxandroid:$rx_android"
+
+    compile "com.jakewharton.rxbinding2:rxbinding-kotlin:$rx_bindings"
+    compile "com.jakewharton.rxbinding2:rxbinding-support-v4-kotlin:$rx_bindings"
+    compile "com.jakewharton.rxbinding2:rxbinding-appcompat-v7-kotlin:$rx_bindings"
+    compile "com.jakewharton.rxbinding2:rxbinding-recyclerview-v7-kotlin:$rx_bindings"
+    compile "com.jakewharton.rxbinding2:rxbinding-design-kotlin:$rx_bindings"
+
+    compile("com.crashlytics.sdk.android:crashlytics:$crashlytics_library@aar") { transitive = true }
+}
+
+task('prepareFabricProps') << {
+    if (enable_fabric) {
+        def file = file('fabric.properties')
+        file.text = "apiSecret=$fabric_api_secret"
+    }
+}
+
+afterEvaluate {
+    crashlyticsUploadDistributionDebug.dependsOn prepareFabricProps
+    crashlyticsUploadDistributionDebug.dependsOn assembleDebug
+
+    if (enable_fabric) {
+        debugPublish.dependsOn crashlyticsUploadDistributionDebug
+    }
+    if (enable_release_publish) {
+        releasePublish.dependsOn publishApkRelease
+    }
+}
+
+task('debugPublish') << {
+    println "*** Fabric is ${enable_fabric ? 'enabled' : 'disabled'}"
+}
+
+task('releasePublish') << {
+    println "*** Play publish is ${enable_fabric ? 'enabled' : 'disabled'}"
+}

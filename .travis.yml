@@ -1,0 +1,15 @@
+language: android
+jdk: oraclejdk8
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-25.0.2
+    - android-25
+
+before_install:
+  - bash travis_licenses.sh
+  - openssl aes-256-cbc -k "$secure_publisher_enc" -in publisher.json.enc -out publisher.json -d
+  - openssl aes-256-cbc -k "$secure_keychain_enc" -in ag-prod.enc -out ag-prod -d
+
+script: ./gradlew build :app:debugPublish :app:releasePublish --continue

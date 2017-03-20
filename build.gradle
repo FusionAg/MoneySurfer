@@ -1,0 +1,140 @@
+initFabric()
+initRelease()
+
+buildscript {
+    ext {
+        def buildNumber = System.getenv("TRAVIS_BUILD_NUMBER")
+        buildNumber = buildNumber != null ? buildNumber.toInteger() : 0
+
+        target_sdk = 25
+        min_sdk = 14
+
+        app_version_major = 0
+        app_version_minor = 1
+        app_version_code = app_version_major * 100000 + app_version_minor * 1000 + (buildNumber % 1000)
+        app_version = "$app_version_major.$app_version_minor.$buildNumber"
+        println("Code: $app_version_code")
+        println("Name: $app_version")
+
+        kotlin_version = '1.1.1'
+
+        dex_count_gradle_plugin = '0.6.3'
+        fabric_gradle_plugin = '1.21.7'
+        play_publish_gradle_plugin = '1.2.0-beta3'
+
+        android_gradle_plugin = '2.3.0'
+        android_build_tools = '25.0.2'
+        android_support = '25.3.0'
+        android_constraint_layout = '1.0.2'
+
+        crashlytics_library = '2.6.7'
+
+        rx_kotlin = '2.0.0'
+        rx_java = '2.0.6'
+        rx_bindings = '2.0.0'
+        rx_lifecycle = '2.0.1'
+        rx_android = '2.0.1'
+        rx_relay = '2.0.0'
+
+        isCi = System.getenv('CI')?.toBoolean() ?: false
+    }
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven { url 'https://maven.fabric.io/public' }
+    }
+    dependencies {
+        classpath "com.github.triplet.gradle:play-publisher:$play_publish_gradle_plugin"
+        classpath "com.android.tools.build:gradle:$android_gradle_plugin"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.getkeepsafe.dexcount:dexcount-gradle-plugin:$dex_count_gradle_plugin"
+        classpath "io.fabric.tools:gradle:$fabric_gradle_plugin"
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url 'https://maven.fabric.io/public' }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+def initFabric() {
+    println '*** Init of fabric params'
+    def fabric_api_key
+    def fabric_api_secret
+    def hasFabricVars = false
+    if (file("local.properties").exists()) {
+        Properties props = new Properties()
+        props.load(new FileInputStream("local.properties"))
+        def names = props.stringPropertyNames()
+        hasFabricVars = names.contains('fabric_api_key') && names.contains('fabric_api_secret')
+        fabric_api_key = props.getProperty('fabric_api_key')
+        fabric_api_secret = props.getProperty('fabric_api_secret')
+        if (hasFabricVars) {
+            println 'Fabric params founded in local.properties'
+        }
+    }
+    if (!hasFabricVars) {
+        fabric_api_key = System.getenv('fabric_api_key')
+        fabric_api_secret = System.getenv('fabric_api_secret')
+        hasFabricVars = fabric_api_key != null && fabric_api_secret != null
+        if (hasFabricVars) {
+            println 'Fabric params founded in env variables'
+        }
+    }
+    if (!hasFabricVars) {
+        println "Fabric params were not found"
+    }
+    project.ext.enable_fabric = hasFabricVars
+    //default key. Valid but not real. Need for successful build
+    def defaultKey = "123456c7aaa891234eb56c78db12346ea1236aab"
+    project.ext.fabric_api_key = fabric_api_key != null ? fabric_api_key : defaultKey
+    project.ext.fabric_api_secret = fabric_api_secret != null ? fabric_api_secret : ""
+}
+
+def initRelease() {
+    println '*** Init of release signature param'
+    def playStorePassword = ""
+    def playKeyPassword = ""
+    def playConfigFound = false
+    if (file("local.properties").exists()) {
+        Properties props = new Properties()
+        props.load(new FileInputStream("local.properties"))
+        playStorePassword = props.getProperty('signing_keychain_password')
+        playKeyPassword = props.getProperty('signing_key_password')
+        playConfigFound = playKeyPassword != null && playStorePassword != null
+        if (playConfigFound) {
+            println 'Prod signature params founded in local.properties'
+        }
+    }
+    if (!playConfigFound) {
+        playStorePassword = System.getenv('storePassword')
+        playKeyPassword = System.getenv('keyPassword')
+        playConfigFound = playKeyPassword != null && playStorePassword != null
+        if (playConfigFound) {
+            println 'Prod signature params founded in env variables'
+        }
+    }
+    def prod_keychain_exists = file("ag-prod").exists()
+    if (!playConfigFound) {
+        println "Prod signature params were not found"
+    }
+    println "Prod keychain is ${prod_keychain_exists ? 'found' : 'not found'}"
+
+    def enable_prod_signature = playConfigFound && prod_keychain_exists
+    project.ext.enable_prod_signature = enable_prod_signature
+    project.ext.signing_keychain_password = playStorePassword != null ? playStorePassword : ""
+    project.ext.signing_key_password = playKeyPassword != null ? playKeyPassword : ""
+
+    def publisherConfigFound = file('publisher.json').exists()
+
+    println "Publisher config is ${publisherConfigFound ? 'found' : 'not found'}"
+
+    project.ext.enable_release_publish = enable_prod_signature && publisherConfigFound
+}

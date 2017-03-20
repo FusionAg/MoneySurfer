@@ -1,0 +1,14 @@
+<lint>
+    <!-- https://youtrack.jetbrains.com/issue/KT-12499 -->
+    <issue id="UnusedResources" severity="ignore" />
+
+    <!-- disabled until we start to care about disabled people :c -->
+    <issue id="ContentDescription" severity="ignore" />
+
+    <!--We update libraries when thinking that they need to be updated,
+     not right after their release. So, it is definitely informal level.-->
+    <issue id="GradleDependency" severity="informational" />
+
+    <!--Too often false positives-->
+    <issue id="Overdraw" severity="informational" />
+</lint>
