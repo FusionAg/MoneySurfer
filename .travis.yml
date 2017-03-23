@@ -6,10 +6,14 @@ android:
     - platform-tools
     - build-tools-25.0.2
     - android-25
+    - sys-img-armeabi-v7a-android-19
 
 before_install:
-  - bash travis_licenses.sh
+  - bash travis/travis_licenses.sh
   - openssl aes-256-cbc -k "$secure_publisher_enc" -in publisher.json.enc -out publisher.json -d
   - openssl aes-256-cbc -k "$secure_keychain_enc" -in ag-prod.enc -out ag-prod -d
 
-script: ./gradlew build :app:debugPublish :app:releasePublish --continue
+before_script:
+  - bash travis/travis_emulator.sh
+
+script: ./gradlew build connectedCheck :app:debugPublish :app:releasePublish --continue

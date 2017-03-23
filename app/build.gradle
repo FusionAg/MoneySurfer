@@ -34,6 +34,8 @@ android {
 
         proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         testProguardFiles 'test-proguard-rules.pro'
+
+        multiDexEnabled false
     }
     buildTypes {
         debug {
@@ -87,6 +89,35 @@ dependencies {
     compile "com.jakewharton.rxbinding2:rxbinding-design-kotlin:$rx_bindings"
 
     compile("com.crashlytics.sdk.android:crashlytics:$crashlytics_library@aar") { transitive = true }
+
+    testCompile "junit:junit:$junit_v"
+    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
+    testCompile "org.mockito:mockito-core:$mockito_v"
+    testCompile "com.nhaarman:mockito-kotlin:$mockito_kotlin_v"
+    testCompile "org.hamcrest:hamcrest-all:$hamcrest_v"
+
+    androidTestCompile "junit:junit:$junit_v"
+
+    androidTestCompile "com.android.support.test.espresso:espresso-core:$espresso_v"
+    androidTestCompile "com.android.support.test.espresso:espresso-contrib:$espresso_v"
+    androidTestCompile "com.android.support.test.espresso:espresso-web:$espresso_v"
+    androidTestCompile "com.android.support.test.espresso:espresso-idling-resource:$espresso_v"
+    androidTestCompile "com.android.support.test.espresso:espresso-intents:$espresso_v"
+}
+
+configurations.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+        force "com.android.support:support-annotations:$android_support"
+        force "com.google.code.findbugs:jsr305:$jsr305_v"
+
+        force "com.android.support:support-annotations:$android_support"
+        force "com.android.support:appcompat-v7:$android_support"
+        force "com.android.support:recyclerview-v7:$android_support"
+        force "com.android.support:design:$android_support"
+        force "com.android.support:support-v4:$android_support"
+    }
 }
 
 task('prepareFabricProps') << {
