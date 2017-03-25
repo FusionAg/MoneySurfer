@@ -39,15 +39,15 @@ android {
     }
     buildTypes {
         debug {
-            minifyEnabled isCi
-            shrinkResources isCi
+            minifyEnabled false
+            shrinkResources false
             applicationIdSuffix ".debug"
             archivesBaseName = "surfer-debug-${app_version}"
             signingConfig signingConfigs.debug
         }
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             archivesBaseName = "surfer-${app_version}"
             signingConfig enable_prod_signature ? signingConfigs.play : signingConfigs.debug

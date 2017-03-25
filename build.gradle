@@ -7,7 +7,7 @@ buildscript {
         buildNumber = buildNumber != null ? buildNumber.toInteger() : 0
 
         target_sdk = 25
-        min_sdk = 21
+        min_sdk = 14
 
         app_version_major = 0
         app_version_minor = 1
