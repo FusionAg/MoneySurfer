@@ -1,4 +1,5 @@
 initFabric()
+initDropbox()
 initRelease()
 
 buildscript {
@@ -24,11 +25,11 @@ buildscript {
 
         android_gradle_plugin = '2.3.0'
         android_build_tools = '25.0.2'
-        android_support = '25.3.0'
+        android_support = '25.3.1'
         android_constraint_layout = '1.0.2'
 
         crashlytics_library = '2.6.7'
-        jsr305_v = '3.0.1'
+        jsr305_version = '3.0.1'
 
         rx_kotlin = '2.0.0'
         rx_java = '2.0.6'
@@ -38,12 +39,12 @@ buildscript {
         rx_relay = '2.0.0'
 
         //test
-        hamcrest_v = '1.3'
-        junit_v = '4.12'
-        mockito_v = '2.7.19'
-        mockito_kotlin_v = '1.3.0'
+        hamcrest_version = '1.3'
+        junit_version = '4.12'
+        mockito_version = '2.7.19'
+        mockito_kotlin_version = '1.3.0'
 
-        espresso_v = '2.2.2'
+        espresso_version = '2.2.2'
 
         isCi = System.getenv('CI')?.toBoolean() ?: false
     }
@@ -146,4 +147,36 @@ def initRelease() {
     println "Publisher config is ${publisherConfigFound ? 'found' : 'not found'}"
 
     project.ext.enable_release_publish = enable_prod_signature && publisherConfigFound
+}
+
+def initDropbox() {
+    println '*** Init of dropbox params'
+    def dropboxApiCode = ""
+    def dropboxApiToken = ""
+    def dropboxConfigFound = false
+    if (file("local.properties").exists()) {
+        Properties props = new Properties()
+        props.load(new FileInputStream("local.properties"))
+        dropboxApiCode = props.getProperty('dropbox_api_code')
+        dropboxApiToken = props.getProperty('dropbox_api_token')
+        dropboxConfigFound = dropboxApiCode != null && dropboxApiToken != null
+        if (dropboxConfigFound) {
+            println 'Dropbox params founded in local.properties'
+        }
+    }
+    if (!dropboxConfigFound) {
+        dropboxApiCode = System.getenv('dropbox_api_code')
+        dropboxApiToken = System.getenv('dropbox_api_token')
+        dropboxConfigFound = dropboxApiCode != null && dropboxApiToken != null
+        if (dropboxConfigFound) {
+            println 'Dropbox params founded in env variables'
+        }
+    }
+    if (!dropboxConfigFound) {
+        println "Dropbox params were not found"
+    }
+
+    project.ext.dropbox_api_enabled = dropboxConfigFound
+    project.ext.dropbox_api_code = dropboxApiCode
+    project.ext.dropbox_api_token = dropboxApiToken
 }

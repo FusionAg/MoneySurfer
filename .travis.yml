@@ -16,4 +16,4 @@ before_install:
 before_script:
   - bash travis/travis_emulator.sh
 
-script: ./gradlew build connectedCheck :app:debugPublish :app:releasePublish --continue
+script: ./gradlew build connectedCheck :app:dropboxUpload :app:debugPublish :app:releasePublish --continue
